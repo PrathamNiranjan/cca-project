@@ -1,0 +1,31 @@
+district_id,soil_type,nitrogen,phosphorus,potassium,ph,rainfall
+1,Black Soil,85,40,35,6.8,750
+2,Red Soil,70,35,30,6.5,680
+3,Laterite Soil,65,30,25,6.0,1200
+4,Red Sandy Loam,80,45,40,6.7,890
+5,Red Loamy Soil,75,42,38,6.6,950
+6,Black Cotton Soil,90,38,42,7.2,650
+7,Red Sandy Soil,68,32,28,6.3,780
+8,Red Loamy Soil,72,36,32,6.5,820
+9,Laterite Soil,63,28,24,5.9,2200
+10,Black Soil,88,42,40,7.0,720
+11,Laterite Soil,62,26,22,5.8,3800
+12,Black Soil,86,41,36,6.9,740
+13,Black Cotton Soil,92,40,44,7.3,680
+14,Black Soil,87,39,38,7.1,670
+15,Red Loamy Soil,74,38,34,6.6,1100
+16,Black Soil,84,37,34,6.8,720
+17,Black Cotton Soil,91,39,43,7.2,630
+18,Laterite Soil,64,27,23,5.8,2800
+19,Red Loamy Soil,76,40,36,6.7,870
+20,Black Soil,83,36,33,6.9,690
+21,Red Loamy Soil,78,44,39,6.8,900
+22,Red Loamy Soil,77,43,37,6.7,850
+23,Black Cotton Soil,89,37,41,7.1,640
+24,Red Loamy Soil,79,45,40,6.8,920
+25,Laterite Soil,66,29,26,6.1,2000
+26,Red Loamy Soil,73,37,33,6.6,860
+27,Laterite Soil,61,25,21,5.7,3500
+28,Laterite Soil,60,24,20,5.6,3200
+29,Black Cotton Soil,93,41,45,7.4,660
+30,Black Cotton Soil,94,42,46,7.5,620

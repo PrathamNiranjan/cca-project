@@ -1,0 +1,31 @@
+district_id,district_name,region
+1,Bagalkot,North Karnataka
+2,Ballari (Bellary),North Karnataka
+3,Belagavi (Belgaum),North Karnataka
+4,Bengaluru Rural,South Karnataka
+5,Bengaluru Urban,South Karnataka
+6,Bidar,North Karnataka
+7,Chamarajanagar,South Karnataka
+8,Chikballapur,South Karnataka
+9,Chikkamagaluru,Malnad Karnataka
+10,Chitradurga,Central Karnataka
+11,Dakshina Kannada,Coastal Karnataka
+12,Davanagere,Central Karnataka
+13,Dharwad,North Karnataka
+14,Gadag,North Karnataka
+15,Hassan,South Karnataka
+16,Haveri,North Karnataka
+17,Kalaburagi (Gulbarga),North Karnataka
+18,Kodagu,Malnad Karnataka
+19,Kolar,South Karnataka
+20,Koppal,North Karnataka
+21,Mandya,South Karnataka
+22,Mysuru (Mysore),South Karnataka
+23,Raichur,North Karnataka
+24,Ramanagara,South Karnataka
+25,Shivamogga (Shimoga),Malnad Karnataka
+26,Tumakuru (Tumkur),South Karnataka
+27,Udupi,Coastal Karnataka
+28,Uttara Kannada,Coastal Karnataka
+29,Vijayapura (Bijapur),North Karnataka
+30,Yadgir,North Karnataka
