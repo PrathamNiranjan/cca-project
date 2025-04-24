@@ -1,22 +1,35 @@
-# app/ml_models/crop_recommendation.py (continued)
-def prepare_training_data(self, soil_data, crop_details, crop_prices):
+# app/ml_models/crop_recommendation.py
+
+import os
+import numpy as np
+import pandas as pd
+import joblib
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+
+class CropRecommender:
+    def __init__(self, model_path='models/crop_recommender.pkl'):
+        self.model = None
+        self.scaler = StandardScaler()
+        self.model_path = model_path
+
+    def prepare_training_data(self, soil_data, crop_details, crop_prices):
         """
         Prepare the data for training by combining soil data and crop suitability
-        
         Returns:
             DataFrame with features and target variable (crop_id)
         """
         training_data = []
-        
-        # For each district
+
         for _, district_soil in soil_data.iterrows():
             district_id = district_soil['district_id']
-            
-            # For each crop
+
             for _, crop in crop_details.iterrows():
                 crop_id = crop['crop_id']
-                
-                # Check if crop is suitable based on soil conditions
+
                 is_suitable = (
                     district_soil['nitrogen'] >= crop['min_nitrogen'] and
                     district_soil['phosphorus'] >= crop['min_phosphorus'] and
@@ -25,15 +38,13 @@ def prepare_training_data(self, soil_data, crop_details, crop_prices):
                     district_soil['ph'] <= crop['max_ph'] and
                     district_soil['soil_type'] in crop['suitable_soil_types']
                 )
-                
-                # Get average price for this crop in this district
+
                 crop_district_prices = crop_prices[
-                    (crop_prices['crop_id'] == crop_id) & 
+                    (crop_prices['crop_id'] == crop_id) &
                     (crop_prices['district_id'] == district_id)
                 ]
                 avg_price = crop_district_prices['price_per_quintal'].mean() if not crop_district_prices.empty else 0
-                
-                # Only include suitable crops
+
                 if is_suitable:
                     training_data.append({
                         'district_id': district_id,
@@ -43,74 +54,46 @@ def prepare_training_data(self, soil_data, crop_details, crop_prices):
                         'potassium': district_soil['potassium'],
                         'ph': district_soil['ph'],
                         'rainfall': district_soil['rainfall'],
-                        'land_size': np.random.uniform(1, 20),  # Random land size for training
+                        'land_size': np.random.uniform(1, 20),
                         'crop_id': crop_id,
                         'price': avg_price
                     })
-        
+
         return pd.DataFrame(training_data)
-    
-def train(self, soil_data, crop_details, crop_prices):
+
+    def train(self, soil_data, crop_details, crop_prices):
         """
         Train the crop recommendation model
-        
-        Args:
-            soil_data: DataFrame with district_id, soil_type, nitrogen, phosphorus, potassium, ph, rainfall
-            crop_details: DataFrame with crop_id, min_nitrogen, min_phosphorus, min_potassium, min_ph, max_ph, suitable_soil_types
-            crop_prices: DataFrame with crop_id, district_id, price_per_quintal
         """
-        # Prepare training data
         training_data = self.prepare_training_data(soil_data, crop_details, crop_prices)
-        
-        # Features and target
-        X = training_data[['district_id', 'nitrogen', 'phosphorus', 'potassium', 'ph', 'rainfall', 'land_size']]
+
+        # Consider removing district_id if it's not one-hot encoded
+        X = training_data[['nitrogen', 'phosphorus', 'potassium', 'ph', 'rainfall', 'land_size']]
         y = training_data['crop_id']
-        
-        # Scale features
+
         X_scaled = self.scaler.fit_transform(X)
-        
-        # Split data
+
         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-        
-        # Train model
+
         self.model = RandomForestClassifier(n_estimators=100, random_state=42)
         self.model.fit(X_train, y_train)
-        
-        # Evaluate model
+
         score = self.model.score(X_test, y_test)
         print(f"Model accuracy: {score:.4f}")
-        
-        # Save model
+
         self.save_model()
-        
+
         return score
-    
-def recommend_crops(self, district_id, soil_type, nitrogen, phosphorus, potassium, ph, rainfall, land_size, crop_details, crop_prices, top_n=5):
+
+    def recommend_crops(self, district_id, soil_type, nitrogen, phosphorus, potassium, ph, rainfall, land_size,
+                        crop_details, crop_prices, top_n=5):
         """
         Recommend crops based on soil conditions and land size
-        
-        Args:
-            district_id: ID of the district
-            soil_type: Type of soil
-            nitrogen: Nitrogen content in soil
-            phosphorus: Phosphorus content in soil
-            potassium: Potassium content in soil
-            ph: pH of soil
-            rainfall: Annual rainfall in mm
-            land_size: Land size in acres
-            crop_details: DataFrame with crop details
-            crop_prices: DataFrame with crop prices
-            top_n: Number of top recommendations to return
-            
-        Returns:
-            DataFrame with recommended crops, suitability score, and price
         """
         if self.model is None:
             raise ValueError("Model not trained or loaded. Train or load a model first.")
-        
-        # Create input data
+
         input_data = pd.DataFrame({
-            'district_id': [district_id],
             'nitrogen': [nitrogen],
             'phosphorus': [phosphorus],
             'potassium': [potassium],
@@ -118,37 +101,29 @@ def recommend_crops(self, district_id, soil_type, nitrogen, phosphorus, potassiu
             'rainfall': [rainfall],
             'land_size': [land_size]
         })
-        
-        # Scale input data
+
         X_input_scaled = self.scaler.transform(input_data)
-        
-        # Get probabilities for each crop class
+
         crop_probs = self.model.predict_proba(X_input_scaled)[0]
-        
-        # Create DataFrame with crop IDs and probabilities
+
         results = pd.DataFrame({
             'crop_id': self.model.classes_,
             'suitability_score': crop_probs
-        })
-        
-        # Sort by suitability score in descending order
-        results = results.sort_values(by='suitability_score', ascending=False)
-        
-        # Get crop details for recommended crops
+        }).sort_values(by='suitability_score', ascending=False)
+
         top_crops = results.head(top_n)
         recommendations = []
-        
+
         for _, row in top_crops.iterrows():
             crop_id = int(row['crop_id'])
             crop_info = crop_details[crop_details['crop_id'] == crop_id].iloc[0]
-            
-            # Get latest price for this crop in this district
+
             crop_district_prices = crop_prices[
-                (crop_prices['crop_id'] == crop_id) & 
+                (crop_prices['crop_id'] == crop_id) &
                 (crop_prices['district_id'] == district_id)
             ]
             latest_price = crop_district_prices['price_per_quintal'].iloc[-1] if not crop_district_prices.empty else 0
-            
+
             recommendations.append({
                 'crop_id': crop_id,
                 'crop_name': crop_info['crop_name'],
@@ -157,29 +132,25 @@ def recommend_crops(self, district_id, soil_type, nitrogen, phosphorus, potassiu
                 'water_requirement': crop_info['water_requirement'],
                 'growth_days': crop_info['growth_days'],
                 'estimated_price': latest_price,
-                'estimated_revenue': latest_price * land_size  # Simple estimate based on land size
+                'estimated_revenue': latest_price * land_size
             })
-        
+
         return pd.DataFrame(recommendations)
-    
-def save_model(self):
+
+    def save_model(self):
         """Save the model to disk"""
         if self.model is None:
             raise ValueError("No model to save. Train a model first.")
-        
-        # Create directory if it doesn't exist
+
         os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
-        
-        # Save model and scaler
         joblib.dump({'model': self.model, 'scaler': self.scaler}, self.model_path)
         print(f"Model saved to {self.model_path}")
-    
-def load_model(self):
+
+    def load_model(self):
         """Load the model from disk"""
         if not os.path.exists(self.model_path):
             raise FileNotFoundError(f"Model file not found at {self.model_path}")
-        
-        # Load model and scaler
+
         saved_data = joblib.load(self.model_path)
         self.model = saved_data['model']
         self.scaler = saved_data['scaler']
@@ -187,31 +158,26 @@ def load_model(self):
 
 
 def create_and_train_model(soil_data_path, crop_details_path, crop_prices_path):
-    """Helper function to create and train the model"""
-    # Load data
     soil_data = pd.read_csv(soil_data_path)
     crop_details = pd.read_csv(crop_details_path)
     crop_prices = pd.read_csv(crop_prices_path)
-    
-    # Create and train model
+
     recommender = CropRecommender()
     score = recommender.train(soil_data, crop_details, crop_prices)
-    
+
     return recommender, score
 
 
 if __name__ == "__main__":
-    # For testing the module directly
     soil_data_path = 'data/soil_data.csv'
     crop_details_path = 'data/crop_details.csv'
     crop_prices_path = 'data/crop_prices_history.csv'
-    
+
     recommender, score = create_and_train_model(soil_data_path, crop_details_path, crop_prices_path)
-    
-    # Test recommendation
+
     crop_details = pd.read_csv(crop_details_path)
     crop_prices = pd.read_csv(crop_prices_path)
-    
+
     recommendations = recommender.recommend_crops(
         district_id=5,
         soil_type='Red Loamy Soil',
@@ -225,6 +191,6 @@ if __name__ == "__main__":
         crop_prices=crop_prices,
         top_n=5
     )
-    
+
     print("Recommended crops:")
     print(recommendations)
